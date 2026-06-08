@@ -9,7 +9,74 @@ from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
 import os
+import re
 from pathlib import Path
+from datetime import datetime
+
+
+def parse_schedule(schedule: str):
+    """Parse schedule string to extract days and times.
+    
+    Returns: (days_list, start_time, end_time) or None if parsing fails
+    """
+    try:
+        # Extract days and times using regex
+        # Format: "Mondays, Wednesdays, Fridays, 2:00 PM - 3:00 PM"
+        match = re.match(r"(.+?),\s*(\d{1,2}:\d{2}\s*(?:AM|PM))\s*-\s*(\d{1,2}:\d{2}\s*(?:AM|PM))", schedule)
+        if not match:
+            return None
+        
+        days_str = match.group(1)
+        start_time_str = match.group(2)
+        end_time_str = match.group(3)
+        
+        # Parse days
+        days = re.findall(r"(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)", days_str)
+        
+        # Convert times to 24-hour format for comparison
+        start_time = datetime.strptime(start_time_str.strip(), "%I:%M %p").time()
+        end_time = datetime.strptime(end_time_str.strip(), "%I:%M %p").time()
+        
+        return (days, start_time, end_time)
+    except Exception:
+        return None
+
+
+def check_schedule_conflict(email: str, new_activity_name: str, new_schedule: str):
+    """Check if a student has a schedule conflict with the new activity.
+    
+    Returns: conflicting_activity_name or None
+    """
+    new_parsed = parse_schedule(new_schedule)
+    if not new_parsed:
+        return None
+    
+    new_days, new_start, new_end = new_parsed
+    
+    # Check all activities for conflicts
+    for activity_name, activity_data in activities.items():
+        if activity_name == new_activity_name:
+            continue
+        
+        # Check if student is already in this activity
+        if email in activity_data["participants"]:
+            existing_parsed = parse_schedule(activity_data["schedule"])
+            if not existing_parsed:
+                continue
+            
+            existing_days, existing_start, existing_end = existing_parsed
+            
+            # Check if days overlap
+            days_overlap = any(day in new_days for day in existing_days)
+            
+            # Check if times overlap
+            times_overlap = not (new_end <= existing_start or new_start >= existing_end)
+            
+            if days_overlap and times_overlap:
+                return activity_name
+    
+    return None
+
 
 app = FastAPI(title="Mergington High School API",
               description="API for viewing and signing up for extracurricular activities")
@@ -101,6 +168,14 @@ def signup_for_activity(activity_name: str, email: str):
     # Validate student is not already signed up
     if email in activity["participants"]:
         raise HTTPException(status_code=400, detail="Student already signed up")
+    
+    # Check for schedule conflicts
+    conflicting_activity = check_schedule_conflict(email, activity_name, activity["schedule"])
+    if conflicting_activity:
+        raise HTTPException(
+            status_code=409, 
+            detail=f"Schedule conflict: Student is already registered for {conflicting_activity} at the same time"
+        )
     
     # Validate activity is not full
     if len(activity["participants"]) >= activity["max_participants"]:
