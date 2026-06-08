@@ -37,7 +37,8 @@ main {
 
 @media (min-width: 768px) {
   main {
-    grid-template-columns: 2fr 1fr;
+    justify-content: flex-start;
+    align-items: flex-start;
   }
 }
 
@@ -47,6 +48,29 @@ section {
   border-radius: 5px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   width: 100%;
+  max-width: 500px;
+}
+
+#activities-container {
+  flex: 1;
+  max-width: 100%;
+  min-width: 300px;
+}
+
+#activities-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 15px;
+}
+
+@media (min-width: 768px) {
+  #activities-list {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+#signup-container {
+  flex: 0 0 auto;
   max-width: 500px;
 }
 
@@ -72,6 +96,57 @@ section h3 {
 
 .activity-card p {
   margin-bottom: 8px;
+}
+
+.participants-section {
+  margin-top: 12px;
+}
+
+.section-label {
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+}
+
+.participants-list {
+  list-style: none;
+  margin: 6px 0 0 0;
+  padding: 0;
+  color: #333;
+}
+
+.participant-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.delete-btn {
+  background-color: transparent;
+  color: #d32f2f;
+  border: none;
+  padding: 2px 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  margin-left: 8px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.delete-btn:hover {
+  opacity: 1;
+  background-color: #ffebee;
+  border-radius: 3px;
+}
+
+.participants-list .no-participants {
+  color: #777;
+  font-style: italic;
 }
 
 .form-group {
@@ -102,6 +177,7 @@ button {
   border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.2s;
+  margin-bottom: 20px;
 }
 
 button:hover {
@@ -109,9 +185,10 @@ button:hover {
 }
 
 .message {
-  margin-top: 20px;
-  padding: 10px;
+  margin-top: 80px;
+  padding: 15px;
   border-radius: 4px;
+  font-weight: 500;
 }
 
 .success {
